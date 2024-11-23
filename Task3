@@ -1,0 +1,112 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+// Function to convert a digit character to its numeric value
+int digitToValue(char digit) {
+    if (digit >= '0' && digit <= '9') return digit - '0';
+    if (digit >= 'A' && digit <= 'F') return digit - 'A' + 10;
+    if (digit >= 'a' && digit <= 'f') return digit - 'a' + 10;
+    return -1;
+}
+
+// Function to convert a numeric value to its digit character in a base
+char valueToDigit(int value) {
+    if (value >= 0 && value <= 9) return value + '0';
+    if (value >= 10 && value <= 15) return value - 10 + 'A';
+    return '?';
+}
+
+// Function to convert a number from any base to decimal
+double baseToDecimal(const char *num, int base) {
+    double result = 0.0;
+    int pointPos = -1;
+    int length = strlen(num);
+    
+    // Find position of decimal point if it exists
+    for (int i = 0; i < length; ++i) {
+        if (num[i] == '.') {
+            pointPos = i;
+            break;
+        }
+    }
+    
+    // Convert integer part
+    int intPartEnd = (pointPos == -1) ? length : pointPos;
+    for (int i = 0; i < intPartEnd; ++i) {
+        result = result * base + digitToValue(num[i]);
+    }
+
+    // Convert fractional part
+    if (pointPos != -1) {
+        double fracPart = 0.0, power = 1.0;
+        for (int i = pointPos + 1; i < length; ++i) {
+            power /= base;
+            fracPart += digitToValue(num[i]) * power;
+        }
+        result += fracPart;
+    }
+
+    return result;
+}
+
+// Function to convert a decimal number to any base
+void decimalToBase(double num, int base, char *result) {
+    char intResult[50] = "";
+    int intPart = (int)num;
+    double fracPart = num - intPart;
+    int i = 0;
+    
+    // Convert integer part
+    if (intPart == 0) {
+        intResult[i++] = '0';
+    } else {
+        while (intPart > 0) {
+            intResult[i++] = valueToDigit(intPart % base);
+            intPart /= base;
+        }
+        intResult[i] = '\0';
+        // Reverse the integer part string
+        for (int j = 0; j < i / 2; ++j) {
+            char temp = intResult[j];
+            intResult[j] = intResult[i - j - 1];
+            intResult[i - j - 1] = temp;
+        }
+    }
+
+    strcpy(result, intResult);
+
+    // Convert fractional part
+    if (fracPart > 0) {
+        strcat(result, ".");
+        int count = 0; // Limit to 10 fractional digits
+        while (fracPart > 0 && count < 10) {
+            fracPart *= base;
+            int fracIntPart = (int)fracPart;
+            char digit = valueToDigit(fracIntPart);
+            strncat(result, &digit, 1);
+            fracPart -= fracIntPart;
+            count++;
+        }
+    }
+}
+
+int main() {
+    char num[50];
+    int fromBase, toBase;
+    char result[100] = "";
+
+    printf("Enter the number: ");
+    scanf("%s", num);
+    printf("Enter the base of the input number (2, 8, 10, 16): ");
+    scanf("%d", &fromBase);
+    printf("Enter the base to convert to (2, 8, 10, 16): ");
+    scanf("%d", &toBase);
+
+    double decimalValue = baseToDecimal(num, fromBase);
+    decimalToBase(decimalValue, toBase, result);
+
+    printf("Converted value: %s\n", result);
+
+    return 0;
+}
